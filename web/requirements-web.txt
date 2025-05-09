@@ -1,5 +1,4 @@
-requests~=2.31.0 
-PyMuPDF~=1.23.5
 Flask~=3.0.0
 Flask-Cors~=4.0.0 
 beautifulsoup4~=4.12.2
+requests~=2.31.0 
