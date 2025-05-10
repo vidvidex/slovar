@@ -1,0 +1,40 @@
+<form action="/search" method="GET">
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-6">
+        <h2 class="mb-3 ms-2">Iskanje po slovarjih</h2>
+
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" autofocus placeholder="Išči..." name="query" value="{{ query }}" />
+          <button class="btn btn-primary" type="submit">Išči</button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <p>Vklopljeni slovarji:</p>
+      <div class="d-flex flex-column flex-lg-row flex-wrap gap-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="dis-slovarcek" id="enableDis" {% if enabled_slovarji.dis_slovarcek %}checked{% endif %} />
+          <label class="form-check-label" for="enableDis">DIS slovarček</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="ltfe" id="enableLtfe" {% if enabled_slovarji.ltfe %}checked{% endif %} />
+          <label class="form-check-label" for="enableLtfe">LTFE IKT slovar</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="ijs" id="enableIjs" {% if enabled_slovarji.ijs %}checked{% endif %} />
+          <label class="form-check-label" for="enableIjs">IJS slovar</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="google-translate" id="enableGT" {% if enabled_slovarji.google_translate %}checked{% endif %} />
+          <label class="form-check-label" for="enableGT">Google prevajalnik</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="repozitorij" id="enableRepozitorij" {% if enabled_slovarji.repozitorij %}checked{% endif %} />
+          <label class="form-check-label" for="enableRepozitorij">Pojavitve v repozitoriju UL</label>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
