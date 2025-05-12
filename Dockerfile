@@ -13,8 +13,8 @@ RUN pip install --no-cache-dir -r requirements-web.txt
 # For production, install Gunicorn
 RUN pip install gunicorn
 
-# Copy the Flask application files
-COPY *.py ./
+# Copy application code
+COPY . .
 
 # Expose the Flask application port
 EXPOSE 5000
