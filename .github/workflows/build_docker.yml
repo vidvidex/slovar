@@ -54,6 +54,6 @@ jobs:
           echo "${{ secrets.SLOVAR_USER_SSH_KEY }}" > ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.SLOVAR_HOST }} > ~/.ssh/known_hosts
       - name: connect and pull
-        run: ssh ${{ secrets.SLOVAR_USER }}@${{ secrets.SLOVAR_HOST }} "cd ${{ secrets.SLOVAR_DIR }} && docker compose pull && docker compose up -d && exit"
+        run: ssh ${{ secrets.SLOVAR_USER }}@${{ secrets.SLOVAR_HOST }} "cd ${{ secrets.SLOVAR_DIR }} && docker compose pull && docker compose up -d && docker image prune -f && exit"
       - name: cleanup
         run: rm -rf ~/.ssh
