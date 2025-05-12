@@ -56,3 +56,4 @@ node_modules/
 venv/
 __pycache__/
 *.db
+config.toml

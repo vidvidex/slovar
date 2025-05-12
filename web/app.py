@@ -1,19 +1,26 @@
 from flask import Flask, request, render_template
 from bs4 import BeautifulSoup
 import requests
-import sqlite3
 from dataclasses import dataclass
 from googletrans import Translator
 import asyncio
 import re
-import aiohttp
 from typing import Dict, Any
+import tomllib
+from pathlib import Path
+import psycopg2
 
 app = Flask(__name__)
 loop = asyncio.get_event_loop()
 
 
-REQUEST_TIMEOUT = 1  # Timeout for requests in seconds
+config_path = Path(__file__).parent / "config.toml"
+with config_path.open("rb") as f:
+    config = tomllib.load(f)
+
+DB_CONFIG = config["database"]
+REQUEST_TIMEOUT = config["requests"]["timeout"]
+
 
 @dataclass
 class slovar_result:
@@ -137,42 +144,73 @@ def google_translate(query: str) -> list[slovar_result]:
 def repozitorij(query: str, page: int) -> list[repozitorij_result]:
     print("Repozitorij: ", query, "page:", page)
     page_size = 50
-
-    conn = sqlite3.connect("slovar.db")
-    cursor = conn.cursor()
-
     offset = (page - 1) * page_size
-    strani_query = f"""SELECT gradivo_id, naslov, leto, repozitorij_url, url as datoteka_url, GROUP_CONCAT(stevilka_strani_pdf) as stevilke_strani_pdf, GROUP_CONCAT(stevilka_strani_skupaj) as stevilke_strani_skupaj from datoteke JOIN strani ON datoteke.id = strani.datoteka_id JOIN gradiva on datoteke.gradivo_id = gradiva.id WHERE text like ? GROUP BY datoteka_id ORDER BY gradivo_id DESC LIMIT {page_size} OFFSET {offset}"""
 
-    cursor.execute(strani_query, ("%" + query + "%",))
+    connection = psycopg2.connect(**DB_CONFIG)
+    cursor = connection.cursor()
+
+    # Check if connection is successful
+    if connection.closed != 0:
+        print("Error connecting to the database.")
+        return []
+
+    strani_query = f"""
+        SELECT gradivo_id, naslov, leto, repozitorij_url, url as datoteka_url,
+            STRING_AGG(stevilka_strani_pdf::text, ',') as stevilke_strani_pdf,
+            STRING_AGG(stevilka_strani_skupaj::text, ',') as stevilke_strani_skupaj
+        FROM datoteke
+        JOIN strani ON datoteke.id = strani.datoteka_id
+        JOIN gradiva ON datoteke.gradivo_id = gradiva.id
+        WHERE text_tsv @@ plainto_tsquery(%s)
+        GROUP BY datoteka_id, gradivo_id, naslov, leto, repozitorij_url, url
+        ORDER BY gradivo_id DESC
+        LIMIT %s OFFSET %s
+    """
+
+    cursor.execute(strani_query, (query, page_size, offset))
     strani = cursor.fetchall()
 
     results = []
     for stran in strani:
-        avtorji_query = """SELECT ime, priimek FROM osebe JOIN gradiva_osebe ON osebe.id = gradiva_osebe.oseba_id WHERE gradivo_id = ?"""
-        cursor.execute(avtorji_query, (stran[0],))
+        gradivo_id = stran[0]
+
+        cursor.execute(
+            """
+            SELECT ime, priimek
+            FROM osebe
+            JOIN gradiva_osebe ON osebe.id = gradiva_osebe.oseba_id
+            WHERE gradivo_id = %s
+        """,
+            (gradivo_id,),
+        )
         avtorji = cursor.fetchall()
 
-        organizacije_query = (
-            """SELECT ime_kratko FROM organizacije JOIN gradiva_organizacije ON organizacije.id = gradiva_organizacije.organizacija_id WHERE gradivo_id = ?"""
+        cursor.execute(
+            """
+            SELECT ime_kratko
+            FROM organizacije
+            JOIN gradiva_organizacije ON organizacije.id = gradiva_organizacije.organizacija_id
+            WHERE gradivo_id = %s
+        """,
+            (gradivo_id,),
         )
-        cursor.execute(organizacije_query, (stran[0],))
         organizacije = cursor.fetchall()
 
         results.append(
             repozitorij_result(
-                stran[1],
-                stran[2],
-                [a[0] + " " + a[1] for a in avtorji],
-                [o[0] for o in organizacije],
-                stran[3],
-                stran[4],
-                stran[5].split(","),
-                stran[6].split(","),
+                naslov=stran[1],
+                leto=stran[2],
+                avtorji=[f"{a[0]} {a[1]}" for a in avtorji],
+                organizacije=[o[0] for o in organizacije],
+                repozitorij_url=stran[3],
+                datoteka_url=stran[4],
+                stevilka_strani_pdf=stran[5].split(","),
+                stevilka_strani_skupaj=stran[6].split(","),
             )
         )
 
-    conn.close()
+    cursor.close()
+    connection.close()
 
     return results
 
