@@ -102,6 +102,70 @@ def ltft(query: str) -> list[slovar_result]:
     return results
 
 
+def sdrv(query: str) -> list[slovar_result]:
+    print("SDRV: ", query)
+
+    base_url = "https://slovar.vicos.si"
+
+    session = requests.Session()
+
+    # Get the CSRF token
+    search_url = f"{base_url}/dictionary/search/"
+    response = session.get(search_url, timeout=REQUEST_TIMEOUT)
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    # Find the CSRF token in the HTML
+    csrf_token = soup.find("input", {"name": "csrfmiddlewaretoken"})["value"]
+
+    # Prepare the data and headers for the POST request
+    post_data = {"csrfmiddlewaretoken": csrf_token, "query": query}
+    headers = {"Referer": search_url}
+
+    # Send the POST request to search for the query
+    search_response = session.post(search_url, data=post_data, headers=headers, timeout=REQUEST_TIMEOUT)
+    if search_response.status_code != 200:
+        print("Error accessing SDRV. Status code:", search_response.status_code)
+        return []
+
+    # Extract the list of terms from the search results
+    soup = BeautifulSoup(search_response.text, "html.parser")
+    h2s = soup.find_all("h2")  # Find all h2 elements
+
+    # Najdi linke do vseh izrazov, ki jih vrne za naš query
+    links = []
+    for h2 in h2s:
+        if h2.text.strip() == "Izrazi":  # Find the h2 with the text "Izrazi"
+            ul = h2.find_next_sibling("ul")
+            a_elements = ul.find_all("a")
+            for link in a_elements:
+                href = link.get("href")
+                links.append(base_url + href)
+            break
+
+    # Za vsak link pošlji GET request in pridobi angleški in slovenski prevod
+    results = []
+    for link in links:
+        response = requests.get(link, timeout=REQUEST_TIMEOUT)
+        if response.status_code != 200:
+            print("Error accessing SDRV term page. Status code:", response.status_code)
+            continue
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        en = soup.find("div", class_="phrase").get_text(strip=True)
+        translations = soup.find_all("li", class_="translation")
+
+        # Če je en od prevodov označen kot approved vrni le tega, drugače vrni vse
+        approved_translations = [t for t in translations if "approved" in t["class"]]
+        if approved_translations:
+            sl = approved_translations[0].find("span", class_="name").get_text(strip=True)
+            results.append(slovar_result(en, sl))
+        else:
+            for translation in translations:
+                sl = translation.find("span", class_="name").get_text(strip=True)
+                results.append(slovar_result(en, sl))
+    return results
+
+
 def ijs(query: str) -> list[slovar_result]:
     print("IJS: ", query)
     url = f"https://www.ijs.si/cgi-bin/rac-slovar?w={query}"
@@ -227,6 +291,9 @@ async def najdi_rezultate(query: str, repozitorij_page: int, enabled_slovarji: D
     if enabled_slovarji.get("ltfe"):
         tasks["ltfe"] = loop.run_in_executor(None, ltft, query)
 
+    if enabled_slovarji.get("sdrv"):
+        tasks["sdrv"] = loop.run_in_executor(None, sdrv, query)
+
     if enabled_slovarji.get("ijs"):
         tasks["ijs"] = loop.run_in_executor(None, ijs, query)
 
@@ -248,7 +315,7 @@ async def najdi_rezultate(query: str, repozitorij_page: int, enabled_slovarji: D
 def index():
 
     # Privzete vrednosti za checkboxe
-    enabled_slovarji = {"dis_slovarcek": True, "ltfe": False, "ijs": True, "google_translate": True, "repozitorij": False}
+    enabled_slovarji = {"dis_slovarcek": True, "ltfe": False, "sdrv": True, "ijs": True, "google_translate": True, "repozitorij": False}
 
     return render_template("index.html", enabled_slovarji=enabled_slovarji)
 
@@ -263,6 +330,7 @@ def search():
     enabled_slovarji = {
         "dis_slovarcek": "dis-slovarcek" in request.args and request.args["dis-slovarcek"] == "on",
         "ltfe": "ltfe" in request.args and request.args["ltfe"] == "on",
+        "sdrv": "sdrv" in request.args and request.args["sdrv"] == "on",
         "ijs": "ijs" in request.args and request.args["ijs"] == "on",
         "google_translate": "google-translate" in request.args and request.args["google-translate"] == "on",
         "repozitorij": "repozitorij" in request.args and request.args["repozitorij"] == "on",

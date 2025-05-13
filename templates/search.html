@@ -32,7 +32,7 @@
       </div>
       {% endif %}
 
-      <h3 class="d-flex justify-content-center mt-4"><a href="https://slovar.ltfe.org/">LTFE IKT slovar</a></h3>
+      <h3 class="d-flex justify-content-center mt-4"><a href="https://slovar.ltfe.org/">Slovar LTFE IKT</a></h3>
       {% if results.ltfe %} {% for result in results.ltfe %}
       <div class="row">
         <div class="col d-flex justify-content-end">{{ result.en }}</div>
@@ -44,7 +44,19 @@
       </div>
       {% endif %}
 
-      <h3 class="d-flex justify-content-center mt-4"><a href="https://www.ijs.si/cgi-bin/rac-slovar">IJS slovar</a></h3>
+      <h3 class="d-flex justify-content-center mt-4"><a href="https://slovar.vicos.si//">Slovar SDRV</a></h3>
+      {% if results.sdrv %} {% for result in results.sdrv %}
+      <div class="row">
+        <div class="col d-flex justify-content-end">{{ result.en }}</div>
+        <div class="col">{{ result.sl }}</div>
+      </div>
+      {% endfor %} {% else %}
+      <div class="row">
+        <div class="col d-flex justify-content-center">Ni rezultatov</div>
+      </div>
+      {% endif %}
+
+      <h3 class="d-flex justify-content-center mt-4"><a href="https://www.ijs.si/cgi-bin/rac-slovar">slovar IJS</a></h3>
       {% if results.ijs %} {% for result in results.ijs %}
       <div class="row">
         <div class="col d-flex justify-content-end">{{ result.en }}</div>
@@ -73,7 +85,7 @@
           <h3 class="d-flex justify-content-center mt-4">Pojavitve v repozitoriju UL</h3>
 
           <div class="row justify-content-around">
-            <button class="col-1 m-2 btn btn-primary" id="prevPageBtn" {% if repozitorij_page <= 1 %} disabled {% endif %}><</button>
+            <button class="col-1 m-2 btn btn-primary" id="prevPageBtn"><</button>
             <span class="col-1 m-2 d-flex justify-content-center">{{ repozitorij_page }}</span>
             <button class="col-1 m-2 btn btn-primary" id="nextPageBtn">></button>
           </div>
@@ -96,7 +108,7 @@
           {% endfor %}
 
           <div class="row justify-content-around">
-            <button class="col-1 m-2 btn btn-primary" id="prevPageBtn" {% if repozitorij_page <= 1 %} disabled {% endif %}><</button>
+            <button class="col-1 m-2 btn btn-primary" id="prevPageBtn"><</button>
             <span class="col-1 m-2 d-flex justify-content-center">{{ repozitorij_page }}</span>
             <button class="col-1 m-2 btn btn-primary" id="nextPageBtn">></button>
           </div>

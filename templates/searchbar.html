@@ -20,11 +20,15 @@
         </div>
         <div class="form-check">
           <input class="form-check-input" type="checkbox" name="ltfe" id="enableLtfe" {% if enabled_slovarji.ltfe %}checked{% endif %} />
-          <label class="form-check-label" for="enableLtfe">LTFE IKT slovar</label>
+          <label class="form-check-label" for="enableLtfe">Slovar LTFE IKT </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="sdrv" id="enableSdrv" {% if enabled_slovarji.sdrv %}checked{% endif %} />
+          <label class="form-check-label" for="enableLtfe">Slovar SDRV</label>
         </div>
         <div class="form-check">
           <input class="form-check-input" type="checkbox" name="ijs" id="enableIjs" {% if enabled_slovarji.ijs %}checked{% endif %} />
-          <label class="form-check-label" for="enableIjs">IJS slovar</label>
+          <label class="form-check-label" for="enableIjs">Slovar IJS</label>
         </div>
         <div class="form-check">
           <input class="form-check-input" type="checkbox" name="google-translate" id="enableGT" {% if enabled_slovarji.google_translate %}checked{% endif %} />
