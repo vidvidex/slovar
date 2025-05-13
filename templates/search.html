@@ -20,6 +20,8 @@
     {% include "searchbar.html" %}
 
     <div class="row justify-content-center">
+
+      {% if enabled_slovarji.dis_slovarcek %}
       <h3 class="d-flex justify-content-center mt-4"><a href="https://dis-slovarcek.ijs.si">DIS slovarček</a></h3>
       {% if results.dis_slovarcek %} {% for result in results.dis_slovarcek %}
       <div class="row">
@@ -31,7 +33,9 @@
         <div class="col d-flex justify-content-center">Ni rezultatov</div>
       </div>
       {% endif %}
+      {% endif %}
 
+      {% if enabled_slovarji.ltfe %}
       <h3 class="d-flex justify-content-center mt-4"><a href="https://slovar.ltfe.org/">Slovar LTFE IKT</a></h3>
       {% if results.ltfe %} {% for result in results.ltfe %}
       <div class="row">
@@ -43,7 +47,9 @@
         <div class="col d-flex justify-content-center">Ni rezultatov</div>
       </div>
       {% endif %}
+      {% endif %}
 
+      {% if enabled_slovarji.sdrv %}
       <h3 class="d-flex justify-content-center mt-4"><a href="https://slovar.vicos.si//">Slovar SDRV</a></h3>
       {% if results.sdrv %} {% for result in results.sdrv %}
       <div class="row">
@@ -55,7 +61,9 @@
         <div class="col d-flex justify-content-center">Ni rezultatov</div>
       </div>
       {% endif %}
+      {% endif %}
 
+      {% if enabled_slovarji.ijs %}
       <h3 class="d-flex justify-content-center mt-4"><a href="https://www.ijs.si/cgi-bin/rac-slovar">slovar IJS</a></h3>
       {% if results.ijs %} {% for result in results.ijs %}
       <div class="row">
@@ -67,7 +75,9 @@
         <div class="col d-flex justify-content-center">Ni rezultatov</div>
       </div>
       {% endif %}
+      {% endif %}
 
+      {% if enabled_slovarji.google_translate %}
       <h3 class="d-flex justify-content-center mt-4"><a href="https://translate.google.com/">Google Translate</a></h3>
       {% if results.google_translate %} {% for result in results.google_translate %}
       <div class="row">
@@ -79,7 +89,9 @@
         <div class="col d-flex justify-content-center">Ni rezultatov</div>
       </div>
       {% endif %}
+      {% endif %}
 
+      {% if enabled_slovarji.repozitorij %}
       <div class="row justify-content-center">
         <div class="col-8">
           <h3 class="d-flex justify-content-center mt-4">Pojavitve v repozitoriju UL</h3>
@@ -114,6 +126,7 @@
           </div>
         </div>
       </div>
+      {% endif %}
     </div>
   </body>
 
