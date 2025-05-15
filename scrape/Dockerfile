@@ -14,5 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Run the base application, user has to provide parameters later
-CMD ["python", "scrape.py"]
-
+ENTRYPOINT ["python", "scrape.py"]
