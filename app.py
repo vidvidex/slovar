@@ -348,5 +348,51 @@ def search():
     )
 
 
+# V mapi migrations/ so .sql datoteke za migracije. Program si v tabeli migrations zapomni, katere migracije so že bile izvedene.
+# Ob zagonu programa preveri, če so bile vse migracije izvedene. Če ne, jih izvede.
+def run_migrations():
+
+    connection = psycopg2.connect(**DB_CONFIG)
+    cursor = connection.cursor()
+
+    # Zagotovi, da tabela migrations obstaja
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS migrations (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) UNIQUE NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """
+    )
+    connection.commit()
+
+    # Najdi vse .sql datoteke v mapi migrations/
+    migrations_path = Path(__file__).parent / "migrations"
+    migration_files = sorted(migrations_path.glob("*.sql"))
+    migration_names = [file.stem for file in migration_files]
+
+    # Preveri, katere migracije so že bile izvedene in izvedi tiste, ki še niso
+    for migration_name in migration_names:
+        cursor.execute("SELECT EXISTS (SELECT 1 FROM migrations WHERE name = %s)", (migration_name,))
+        already_migrated = cursor.fetchone()[0]
+        if already_migrated:
+            print(f"Migration {migration_name} already executed.")
+            continue
+        print(f"Executing migration {migration_name}...")
+        with open(f"{migrations_path}/{migration_name}.sql", "r") as file:
+            sql = file.read()
+            cursor.execute(sql)
+            cursor.execute("INSERT INTO migrations (name) VALUES (%s)", (migration_name,))
+            print(f"Migration {migration_name} executed.")
+    connection.commit()
+    cursor.close()
+    connection.close()
+    print("All migrations executed.")
+
+
 if __name__ == "__main__":
+
+    run_migrations()
+
     app.run(debug=True)

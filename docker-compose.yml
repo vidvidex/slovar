@@ -1,0 +1,18 @@
+# Development docker-compose file for the project
+services:
+  postgres:
+    image: "postgres:17"
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      PGPASSWORD: "password"
+      POSTGRES_DB: "slovar"
+      POSTGRES_USER: "slovar"
+      POSTGRES_PASSWORD: "password"
+    volumes:
+      - "postgres_data:/var/lib/postgresql/data"
+
+volumes:
+  postgres_data:
+    driver: local
