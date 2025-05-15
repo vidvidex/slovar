@@ -11,7 +11,7 @@ COPY scrape/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY . .
+COPY scrape/scrape.py .
 
 # Run the base application, user has to provide parameters later
 ENTRYPOINT ["python", "scrape.py"]
