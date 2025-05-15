@@ -309,9 +309,8 @@ if __name__ == "__main__":
 
     scrape_parser = subparsers.add_parser("scrape", help="V bazo shrani gradiva z določenega faksa")
     scrape_parser.add_argument(
-        "id",
-        type=int,
-        help="ID faksa, ki ga želimo prenesti. 11 = FMF, 25 = FRI, 27 = FE, dk=vse. Ostalo: https://repozitorij.uni-lj.si/ajax.php?cmd=getSearch",
+        "ids",
+        help="IDji faksov, ki ga želimo prenesti, ločeni z vejico. 11 = FMF, 25 = FRI, 27 = FE, dk=vse. Ostalo: https://repozitorij.uni-lj.si/ajax.php?cmd=getSearch",
     )
     scrape_parser.add_argument(
         "--all",
@@ -322,7 +321,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.command == "scrape":
-        scrape_faks(conn, all=args.all, source_id=args.id)
+        ids = args.ids.split(",")
+        for id in ids:
+            scrape_faks(conn, all=args.all, source_id=id)
     else:
         print("Navedite ukaz")
 
