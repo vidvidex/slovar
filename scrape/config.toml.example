@@ -1,6 +1,6 @@
 [requests]
-# Request timeout of HTTP requests in seconds
-timeout = 1
+timeout = 1 # Request timeout of HTTP requests in seconds
+delay = 0.5 # Time between requests in seconds
 
 [database]
 host = "localhost"

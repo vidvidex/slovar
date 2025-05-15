@@ -1,0 +1,10 @@
+[requests]
+timeout = 1 # Request timeout of HTTP requests in seconds
+
+[database]
+host = "localhost"
+port = 5432
+dbname = "your_db_name"
+user = "your_username"
+password = "your_password"
+

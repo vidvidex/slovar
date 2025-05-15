@@ -1,4 +1,4 @@
-name: Build, publish and deploy docker image
+name: Build, publish and deploy docker image for slovar-web
 
 on:
   push:
@@ -35,12 +35,12 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v5
         with:
-          file: ./Dockerfile
+          file: ./web/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/slovar:${{ steps.current-time.outputs.formattedTime }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/slovar:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/slovar-web:${{ steps.current-time.outputs.formattedTime }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/slovar-web:latest
 
   deploy:
     needs: build

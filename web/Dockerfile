@@ -1,14 +1,14 @@
 # Base image
-FROM python:3.12
+FROM python:3.14
 
 # Set the working directory
 WORKDIR /app
 
 # Copy the requirements file
-COPY requirements-web.txt .
+COPY requirements.txt .
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements-web.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # For production, install Gunicorn
 RUN pip install gunicorn
