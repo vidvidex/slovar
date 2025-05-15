@@ -5,10 +5,10 @@ FROM python:3.13
 WORKDIR /app
 
 # Copy the requirements file
-COPY requirements.txt .
+COPY web/requirements.txt .
 
 # Install dependencies
-RUN pip install --no-cache-dir -r web/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # For production, install Gunicorn
 RUN pip install gunicorn

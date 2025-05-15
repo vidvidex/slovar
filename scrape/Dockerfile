@@ -5,10 +5,10 @@ FROM python:3.13
 WORKDIR /app
 
 # Copy the requirements file
-COPY requirements.txt .
+COPY scrape/requirements.txt .
 
 # Install dependencies
-RUN pip install --no-cache-dir -r scrape/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
