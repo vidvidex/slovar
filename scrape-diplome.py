@@ -1,16 +1,18 @@
 import requests
 import fitz
-import sqlite3
+import psycopg2
 import time
 from dataclasses import dataclass
 import argparse
+import tomllib
+from pathlib import Path
 
-#
-# cel repozitorij: source=dk
-# fri: source=25
-#
+config_path = Path(__file__).parent / "config.toml"
+with config_path.open("rb") as f:
+    config = tomllib.load(f)
 
-REQUESTS_DELAY = 0.5
+DB_CONFIG = config["database"]
+REQUEST_DELAY = config["requests"]["delay"]
 
 
 @dataclass
@@ -58,7 +60,7 @@ def extract_strani(url: str) -> list[Stran]:
 
     try:
         response = requests.get(url)
-        time.sleep(REQUESTS_DELAY)
+        time.sleep(REQUEST_DELAY)
     except requests.exceptions.HTTPError as e:
         print(f"Napaka pri prenašanju iz naslova {url}: {e}")
         return []
@@ -87,7 +89,7 @@ def extract_strani(url: str) -> list[Stran]:
 
 def json_to_gradivo(gradivo_json: object) -> Gradivo:
     """
-    Iz response jsona prebere podatke o gradivu, na tej točki datoteke, ki pripadajo gradivu še nimajo prenesenih strani
+    Iz response jsona prebere podatke o gradivu. Na tej točki datoteke, ki pripadajo gradivu še nimajo prenesenih strani
     """
     osebe = []
     for avtor in gradivo_json["Osebe"]:
@@ -120,21 +122,21 @@ def json_to_gradivo(gradivo_json: object) -> Gradivo:
 
 def db_dodaj_organizacijo(conn, organizacija: Organizacija, gradivo: Gradivo):
     """
-    Doda organizacijo v tabelo organizacij če še ni ter doda povezavo med gradivom in organizacijo
+    Doda organizacijo v tabelo organizacij, če še ni, ter doda povezavo med gradivom in organizacijo
     """
 
     cursor = conn.cursor()
 
     print(f"    Dodajam organizacijo {organizacija.ime_kratko}")
     cursor.execute(
-        "INSERT OR IGNORE INTO organizacije VALUES (?, ?, ?)",
+        "INSERT INTO organizacije VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
         (organizacija.id, organizacija.ime_dolgo, organizacija.ime_kratko),
     )
     conn.commit()
 
     print("    Dodajam povezavo med organizacijo in gradivom")
     cursor.execute(
-        "INSERT OR IGNORE INTO gradiva_organizacije (gradivo_id, organizacija_id) VALUES (?, ?)",
+        "INSERT INTO gradiva_organizacije (gradivo_id, organizacija_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
         (gradivo.id, organizacija.id),
     )
     conn.commit()
@@ -142,13 +144,13 @@ def db_dodaj_organizacijo(conn, organizacija: Organizacija, gradivo: Gradivo):
 
 def db_dodaj_osebe(conn, oseba: Oseba, gradivo: Gradivo):
     """
-    Doda osebo v tabelo oseb če še ni ter doda povezavo med gradivom in osebo
+    Doda osebo v tabelo oseb, če še ni, ter doda povezavo med gradivom in osebo
     """
 
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT id FROM osebe WHERE ime = ? AND priimek = ?",
+        "SELECT id FROM osebe WHERE ime = %s AND priimek = %s",
         (oseba.ime, oseba.priimek),
     )
     result = cursor.fetchall()
@@ -159,21 +161,21 @@ def db_dodaj_osebe(conn, oseba: Oseba, gradivo: Gradivo):
     else:
         print(f"    Dodajam osebo {oseba.ime} {oseba.priimek}")
         cursor.execute(
-            "INSERT INTO osebe (ime, priimek) VALUES (?, ?)",
+            "INSERT INTO osebe (ime, priimek) VALUES (%s, %s)",
             (oseba.ime, oseba.priimek),
         )
 
         conn.commit()
 
     cursor.execute(
-        "SELECT id FROM osebe WHERE ime = ? AND priimek = ?",
+        "SELECT id FROM osebe WHERE ime = %s AND priimek = %s",
         (oseba.ime, oseba.priimek),
     )
     id = cursor.fetchone()[0]
 
     print("    Dodajam povezavo med osebo in gradivom")
     cursor.execute(
-        "INSERT OR IGNORE INTO gradiva_osebe (gradivo_id, oseba_id) VALUES (?, ?)",
+        "INSERT INTO gradiva_osebe (gradivo_id, oseba_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
         (gradivo.id, id),
     )
     conn.commit()
@@ -188,7 +190,7 @@ def db_dodaj_gradivo(conn, gradivo: Gradivo):
 
     print(f"    Dodajam gradivo v bazo")
     cursor.execute(
-        "INSERT OR IGNORE INTO gradiva (id, naslov, leto, repozitorij_url) VALUES (?, ?, ?, ?)",
+        "INSERT INTO gradiva (id, naslov, leto, repozitorij_url) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
         (gradivo.id, gradivo.naslov, gradivo.leto, gradivo.repozitorij_url),
     )
     conn.commit()
@@ -203,7 +205,7 @@ def db_dodaj_datoteko(conn, datoteka: Datoteka, gradivo: Gradivo):
 
     print(f"    Dodajam datoteko iz naslova {datoteka.url}")
     cursor.execute(
-        "INSERT OR IGNORE INTO datoteke (id, url, gradivo_id) VALUES (?, ?, ?)",
+        "INSERT INTO datoteke (id, url, gradivo_id) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
         (datoteka.id, datoteka.url, gradivo.id),
     )
     conn.commit()
@@ -211,7 +213,7 @@ def db_dodaj_datoteko(conn, datoteka: Datoteka, gradivo: Gradivo):
     print(f"      Dodajam {len(datoteka.strani)} strani")
     for stran in datoteka.strani:
         cursor.execute(
-            "INSERT OR IGNORE INTO strani (datoteka_id, stevilka_strani_skupaj, stevilka_strani_pdf, text) VALUES (?, ?, ?, ?)",
+            "INSERT INTO strani (datoteka_id, stevilka_strani_skupaj, stevilka_strani_pdf, text) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
             (
                 datoteka.id,
                 stran.stevilka_strani_skupaj,
@@ -229,13 +231,13 @@ def db_ali_gradivo_obstaja(conn, gradivo: Gradivo) -> bool:
 
     cursor = conn.cursor()
 
-    cursor.execute("SELECT id FROM gradiva WHERE id = ?", (gradivo.id,))
+    cursor.execute("SELECT id FROM gradiva WHERE id = %s", (gradivo.id,))
     result = cursor.fetchall()
 
     return len(result) != 0
 
 
-def scrape_search_result_page(source_id: int, page: int) -> (list[Gradivo], bool):
+def scrape_search_result_page(source_id: int, page: int) -> tuple[list[Gradivo], bool]:
     """
     Scrapa eno stran gradiv in vrne seznam gradiv ter bool, ki pove ali lahko scrapamo tudi naslednjo stran ali smo že na koncu (true=lahko nadaljujemo)
     """
@@ -244,7 +246,7 @@ def scrape_search_result_page(source_id: int, page: int) -> (list[Gradivo], bool
 
     try:
         response = requests.get(url)
-        time.sleep(REQUESTS_DELAY)
+        time.sleep(REQUEST_DELAY)
     except requests.exceptions.HTTPError as e:
         print(f"Napaka pri prenašanju iz naslova {url}: {e}")
         return [], True
@@ -259,7 +261,7 @@ def scrape_search_result_page(source_id: int, page: int) -> (list[Gradivo], bool
 
 def scrape_faks(conn, all=False, source_id=25, start_page=1):
     """
-    V sistem prenese vse diplome z določenega faksa
+    V sistem prenese vso gradivo z določenega faksa
     """
 
     page = start_page
@@ -285,13 +287,13 @@ def scrape_faks(conn, all=False, source_id=25, start_page=1):
                 print(f"    Prenašam strani za datoteko {datoteka.url}")
                 datoteka.strani = extract_strani(datoteka.url)
 
+            db_dodaj_gradivo(conn, gradivo)
+
             for organizacija in gradivo.organizacije:
                 db_dodaj_organizacijo(conn, organizacija, gradivo)
 
             for oseba in gradivo.avtorji:
                 db_dodaj_osebe(conn, oseba, gradivo)
-
-            db_dodaj_gradivo(conn, gradivo)
 
             for datoteka in gradivo.datoteke:
                 db_dodaj_datoteko(conn, datoteka, gradivo)
@@ -299,123 +301,30 @@ def scrape_faks(conn, all=False, source_id=25, start_page=1):
             print()
 
 
-def create_schema(conn):
-    """
-    Poskrbi da tabele v bazi obstajajo
-    """
-
-    cursor = conn.cursor()
-
-    print(f"Ustvarjam tabele če še ne obstajajo")
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS gradiva
-                 (id INTEGER PRIMARY KEY,
-                  naslov TEXT,
-                  leto INTEGER,
-                  repozitorij_url TEXT)"""
-    )
-
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS osebe
-                 (id INTEGER PRIMARY KEY,
-                  ime TEXT,
-                  priimek TEXT)"""
-    )
-
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS organizacije
-                 (id INTEGER PRIMARY KEY,
-                  ime_kratko TEXT,
-                  ime_dolgo TEXT)"""
-    )
-
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS datoteke
-                 (id INTEGER PRIMARY KEY,
-                  url TEXT,
-                  gradivo_id INTEGER,
-                  FOREIGN KEY(gradivo_id) REFERENCES gradiva(id))"""
-    )
-
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS strani
-                 (id INTEGER PRIMARY KEY,
-                  datoteka_id INTEGER,
-                  stevilka_strani_skupaj INTEGER,
-                  stevilka_strani_pdf INTEGER NULL,
-                  text TEXT,
-                  FOREIGN KEY(datoteka_id) REFERENCES datoteke(id))"""
-    )
-
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS gradiva_osebe
-                 (gradivo_id INTEGER,
-                  oseba_id INTEGER,
-                  PRIMARY KEY(gradivo_id, oseba_id),
-                  FOREIGN KEY(gradivo_id) REFERENCES gradiva(id),
-                  FOREIGN KEY(oseba_id) REFERENCES osebe(id))"""
-    )
-
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS gradiva_organizacije
-                 (gradivo_id INTEGER,
-                  organizacija_id INTEGER,
-                  PRIMARY KEY(gradivo_id, organizacija_id),
-                  FOREIGN KEY(gradivo_id) REFERENCES gradiva(id),
-                  FOREIGN KEY(organizacija_id) REFERENCES organizacije(id))"""
-    )
-
-    conn.commit()
-
-
-def drop_tables(conn):
-    """
-    Izbriše vse tabele v bazi
-    """
-    cursor = conn.cursor()
-
-    print(f"Brišem tabele v bazi")
-    cursor.execute("DROP TABLE IF EXISTS gradiva")
-    cursor.execute("DROP TABLE IF EXISTS osebe")
-    cursor.execute("DROP TABLE IF EXISTS organizacije")
-    cursor.execute("DROP TABLE IF EXISTS datoteke")
-    cursor.execute("DROP TABLE IF EXISTS strani")
-    cursor.execute("DROP TABLE IF EXISTS gradiva_osebe")
-    cursor.execute("DROP TABLE IF EXISTS gradiva_organizacije")
-
-
 if __name__ == "__main__":
-    conn = sqlite3.connect("slovar.db")
+    conn = psycopg2.connect(**DB_CONFIG)
 
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command")
 
-    recreate_parser = subparsers.add_parser(
-        "recreate-schema", help="Izbriši in ustvari tabele v bazi"
-    )
-
-    scrape_parser = subparsers.add_parser(
-        "scrape", help="V bazo shrani gradiva z določenega faksa"
-    )
+    scrape_parser = subparsers.add_parser("scrape", help="V bazo shrani gradiva z določenega faksa")
     scrape_parser.add_argument(
         "id",
         type=int,
-        help="ID faksa, ki ga želimo prenesti. 11 = FMF, 25 = FRI, 27 = FE. Ostalo: https://repozitorij.uni-lj.si/ajax.php?cmd=getSearch",
+        help="ID faksa, ki ga želimo prenesti. 11 = FMF, 25 = FRI, 27 = FE, dk=vse. Ostalo: https://repozitorij.uni-lj.si/ajax.php?cmd=getSearch",
     )
     scrape_parser.add_argument(
         "--all",
         "-a",
-        action="store_true",
         help="Prenesi vsa gradiva. Privzeto se ustavi ko pride do prvega gradiva, ki je že v bazi",
     )
 
     args = parser.parse_args()
 
-    if args.command == "recreate-schema":
-        drop_tables(conn)
-        create_schema(conn)
-    elif args.command == "scrape":
+    if args.command == "scrape":
         scrape_faks(conn, all=args.all, source_id=args.id)
+    else:
+        print("Navedite ukaz")
 
     args = parser.parse_args()
 

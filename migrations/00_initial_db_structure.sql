@@ -1,27 +1,27 @@
 CREATE TABLE organizacije (
-    id integer PRIMARY KEY,
+    id serial PRIMARY KEY,
     ime_kratko text,
     ime_dolgo text
 );
 CREATE TABLE osebe (
-    id integer PRIMARY KEY,
+    id serial PRIMARY KEY,
     ime text,
     priimek text
 );
 CREATE TABLE gradiva (
-    id integer PRIMARY KEY,
+    id serial PRIMARY KEY,
     naslov text,
     leto integer,
     repozitorij_url text
 );
 CREATE TABLE datoteke (
-    id integer PRIMARY KEY,
+    id serial PRIMARY KEY,
     url text,
     gradivo_id integer,
     CONSTRAINT datoteke_gradivo_id_fkey FOREIGN KEY (gradivo_id) REFERENCES gradiva (id)
 );
 CREATE TABLE strani (
-    id integer PRIMARY KEY,
+    id serial PRIMARY KEY,
     datoteka_id integer,
     stevilka_strani_skupaj text,
     stevilka_strani_pdf text,

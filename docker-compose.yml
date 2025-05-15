@@ -2,7 +2,7 @@
 services:
   postgres:
     image: "postgres:17"
-    container_name: postgres
+    container_name: slovar_postgres
     ports:
       - "5432:5432"
     environment:
