@@ -57,3 +57,4 @@ venv/
 __pycache__/
 *.db
 config.toml
+.vscode/
