@@ -150,18 +150,35 @@ def db_dodaj_osebe(conn, oseba: Oseba, gradivo: Gradivo):
     cursor = conn.cursor()
 
     print(f"    Dodajam osebo {oseba.ime} {oseba.priimek}")
+    # Poskusimo dodati osebo
     cursor.execute(
-        "INSERT INTO osebe (ime, priimek) VALUES (%s, %s) ON CONFLICT DO NOTHING RETURNING id",
+        """
+        INSERT INTO osebe (ime, priimek) VALUES (%s, %s) ON CONFLICT (ime, priimek) DO NOTHING RETURNING id
+        """,
         (oseba.ime, oseba.priimek),
     )
-    conn.commit()
-    id = cursor.fetchone()[0]
+
+    result = cursor.fetchone()
+    if result:
+        print("    Oseba dodana v bazo, ID:", result[0])
+        oseba_id = result[0]
+    else:
+        # Oseba že obstaja – poiščemo njen ID
+        cursor.execute(
+            "SELECT id FROM osebe WHERE ime = %s AND priimek = %s",
+            (oseba.ime, oseba.priimek),
+        )
+        oseba_id = cursor.fetchone()[0]
+        print("    Oseba že obstaja, ID:", oseba_id)
 
     print("    Dodajam povezavo med osebo in gradivom")
     cursor.execute(
-        "INSERT INTO gradiva_osebe (gradivo_id, oseba_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
-        (gradivo.id, id),
+        """
+        INSERT INTO gradiva_osebe (gradivo_id, oseba_id) VALUES (%s, %s) ON CONFLICT DO NOTHING
+        """,
+        (gradivo.id, oseba_id),
     )
+
     conn.commit()
 
 
