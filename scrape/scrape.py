@@ -127,7 +127,7 @@ def db_dodaj_organizacijo(conn, organizacija: Organizacija, gradivo: Gradivo):
 
     cursor = conn.cursor()
 
-    print(f"    Dodajam organizacijo {organizacija.ime_kratko}")
+    print(f"    Dodajam organizacijo {organizacija.ime_kratko} (če še ne obstaja)")
     cursor.execute(
         "INSERT INTO organizacije VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
         (organizacija.id, organizacija.ime_dolgo, organizacija.ime_kratko),
@@ -327,6 +327,7 @@ if __name__ == "__main__":
     if args.command == "scrape":
         ids = args.ids.split(",")
         for id in ids:
+            print(f"Začenjam scrapanje za organizacijo {id}")
             scrape_faks(conn, all=args.all, source_id=id)
     else:
         print("Navedite ukaz")
