@@ -149,28 +149,12 @@ def db_dodaj_osebe(conn, oseba: Oseba, gradivo: Gradivo):
 
     cursor = conn.cursor()
 
+    print(f"    Dodajam osebo {oseba.ime} {oseba.priimek}")
     cursor.execute(
-        "SELECT id FROM osebe WHERE ime = %s AND priimek = %s",
+        "INSERT INTO osebe (ime, priimek) VALUES (%s, %s) ON CONFLICT DO NOTHING RETURNING id",
         (oseba.ime, oseba.priimek),
     )
-    result = cursor.fetchall()
-
-    if len(result) != 0:
-        print(f"    Oseba {oseba.ime} {oseba.priimek} že obstaja")
-
-    else:
-        print(f"    Dodajam osebo {oseba.ime} {oseba.priimek}")
-        cursor.execute(
-            "INSERT INTO osebe (ime, priimek) VALUES (%s, %s)",
-            (oseba.ime, oseba.priimek),
-        )
-
-        conn.commit()
-
-    cursor.execute(
-        "SELECT id FROM osebe WHERE ime = %s AND priimek = %s",
-        (oseba.ime, oseba.priimek),
-    )
+    conn.commit()
     id = cursor.fetchone()[0]
 
     print("    Dodajam povezavo med osebo in gradivom")
