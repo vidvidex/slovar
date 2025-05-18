@@ -212,13 +212,17 @@ def db_dodaj_datoteko(conn, datoteka: Datoteka, gradivo: Gradivo):
 
     print(f"      Dodajam {len(datoteka.strani)} strani")
     for stran in datoteka.strani:
+
+        # Odstrani nul byte iz besedila
+        sanitized_text = stran.text.replace("\x00", "")
+
         cursor.execute(
             "INSERT INTO strani (datoteka_id, stevilka_strani_skupaj, stevilka_strani_pdf, text) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
             (
                 datoteka.id,
                 stran.stevilka_strani_skupaj,
                 stran.stevilka_strani_pdf,
-                stran.text,
+                sanitized_text,
             ),
         )
     conn.commit()
