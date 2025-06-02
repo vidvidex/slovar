@@ -64,8 +64,22 @@
       {% endif %}
 
       {% if enabled_slovarji.ijs %}
-      <h3 class="d-flex justify-content-center mt-4"><a href="https://www.ijs.si/cgi-bin/rac-slovar">slovar IJS</a></h3>
+      <h3 class="d-flex justify-content-center mt-4"><a href="https://www.ijs.si/cgi-bin/rac-slovar">Slovar IJS</a></h3>
       {% if results.ijs %} {% for result in results.ijs %}
+      <div class="row">
+        <div class="col d-flex justify-content-end">{{ result.en }}</div>
+        <div class="col">{{ result.sl }}</div>
+      </div>
+      {% endfor %} {% else %}
+      <div class="row">
+        <div class="col d-flex justify-content-center">Ni rezultatov</div>
+      </div>
+      {% endif %}
+      {% endif %}
+
+      {% if enabled_slovarji.islovar %}
+      <h3 class="d-flex justify-content-center mt-4"><a href="http://islovar.org/islovar">Islovar</a></h3>
+      {% if results.islovar %} {% for result in results.islovar %}
       <div class="row">
         <div class="col d-flex justify-content-end">{{ result.en }}</div>
         <div class="col">{{ result.sl }}</div>
