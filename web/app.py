@@ -222,6 +222,38 @@ def islovar(query: str) -> list[slovar_result]:
     return results
 
 
+def ezs_glosar(query: str) -> list[slovar_result]:
+    print("EZS Glosar: ", query)
+
+    url = f"https://eglosar.si/"
+    post_data = {"q": query, "qHidden": query}
+    response = requests.post(url, data=post_data, timeout=REQUEST_TIMEOUT)
+
+    if not response.ok:
+        print(f"Error accessing {url}. Status code: {response.status_code}")
+        return []
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    articles = soup.find_all("article", class_="ezs-main-results-item")
+
+    results = []
+
+    for article in articles:
+        sl = article.find("td", class_="ezs-result-title").get_text(strip=True)
+
+        rows = article.find_all("tr")
+        for row in rows:
+            cols = row.find_all("td")
+            if cols and cols[0].get_text(strip=True) == "EN":
+                english_cell = cols[1]
+                first_line = english_cell.stripped_strings
+                en = next(first_line, "").strip()
+                results.append(slovar_result(en=en, sl=sl))
+                break
+
+    return results
+
+
 def google_translate(query: str) -> list[slovar_result]:
     print("Google Translate: ", query)
     translator = Translator()
@@ -324,6 +356,9 @@ async def najdi_rezultate(query: str, repozitorij_page: int, enabled_slovarji: D
     if enabled_slovarji.get("islovar"):
         tasks["islovar"] = loop.run_in_executor(None, islovar, query)
 
+    if enabled_slovarji.get("ezs_glosar"):
+        tasks["ezs_glosar"] = loop.run_in_executor(None, ezs_glosar, query)
+
     if enabled_slovarji.get("google_translate"):
         tasks["google_translate"] = loop.run_in_executor(None, google_translate, query)
 
@@ -342,7 +377,16 @@ async def najdi_rezultate(query: str, repozitorij_page: int, enabled_slovarji: D
 def index():
 
     # Privzete vrednosti za checkboxe
-    enabled_slovarji = {"dis_slovarcek": True, "ltfe": False, "sdrv": True, "ijs": True, "islovar": True, "google_translate": True, "repozitorij": False}
+    enabled_slovarji = {
+        "dis_slovarcek": True,
+        "ltfe": False,
+        "sdrv": True,
+        "ijs": True,
+        "islovar": True,
+        "ezs_glosar": True,
+        "google_translate": True,
+        "repozitorij": False,
+    }
 
     return render_template("index.html", enabled_slovarji=enabled_slovarji)
 
@@ -360,6 +404,7 @@ def search():
         "sdrv": "sdrv" in request.args and request.args["sdrv"] == "on",
         "ijs": "ijs" in request.args and request.args["ijs"] == "on",
         "islovar": "islovar" in request.args and request.args["islovar"] == "on",
+        "ezs_glosar": "ezs_glosar" in request.args and request.args["ezs_glosar"] == "on",
         "google_translate": "google-translate" in request.args and request.args["google-translate"] == "on",
         "repozitorij": "repozitorij" in request.args and request.args["repozitorij"] == "on",
     }
