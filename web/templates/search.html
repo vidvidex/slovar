@@ -140,7 +140,7 @@
               </span>
               <br />
               <span style="text-indent: 2em">Strani:</span>
-              {% for stran in result.stevilka_strani_pdf %}
+              {% for stran in result.stevilka_strani_skupaj %}
               <a href="{{ result.datoteka_url }}#page={{ stran }}" target="_blank">{{ stran }}</a>
               {% endfor %}
             </div>
