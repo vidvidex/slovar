@@ -11,7 +11,6 @@ from pathlib import Path
 import psycopg2
 
 app = Flask(__name__)
-loop = asyncio.get_event_loop()
 
 
 config_path = Path(__file__).parent / "config.toml"
@@ -257,7 +256,7 @@ def ezs_glosar(query: str) -> list[slovar_result]:
 def google_translate(query: str) -> list[slovar_result]:
     print("Google Translate: ", query)
     translator = Translator()
-    result = loop.run_until_complete(translator.translate(query, dest="sl"))
+    result = asyncio.run(translator.translate(query, dest="sl"))
     return [slovar_result(query, result.text)]
 
 
@@ -336,7 +335,7 @@ def repozitorij(query: str, page: int) -> list[repozitorij_result]:
 
 
 async def najdi_rezultate(query: str, repozitorij_page: int, enabled_slovarji: Dict[str, bool]) -> Dict[str, Any]:
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     results = {}
 
     tasks = {}
