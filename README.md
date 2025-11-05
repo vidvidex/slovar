@@ -20,3 +20,30 @@ Terminološki slovarji na enem mestu
 ![standards](https://imgs.xkcd.com/comics/standards.png)
 
 [standards](https://xkcd.com/927)
+
+## Lokalna uporaba (`slovar-web`)
+
+- `config.toml` vsebuje konfiguracijo za lokalno (dev) uporabo
+
+1. Poženi postgres
+
+    ```bash
+    docker-compose up
+    ```
+
+2. Naloži knjižnice za slovar-web
+
+    ```bash
+    cd web
+    python -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    ```
+
+3. Prižgi aplikacijo
+
+    ```bash
+    python app.py
+    ```
+
+4. Obišči [http://localhost:5000](http://localhost:5000)
