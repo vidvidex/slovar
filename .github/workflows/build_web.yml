@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - uses: actions/checkout@v4
@@ -47,9 +50,9 @@ jobs:
         uses: actions/delete-package-versions@v5
         with:
           package-name: slovar-web
-          package-type: 'container'
+          package-type: "container"
           min-versions-to-keep: 10
-          delete-only-untagged-versions: 'true'
+          delete-only-untagged-versions: "true"
 
   deploy:
     needs: build
