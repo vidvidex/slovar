@@ -36,7 +36,6 @@ class repozitorij_result:
     repozitorij_url: str
     datoteka_url: str
     stevilka_strani_skupaj: list[int]
-    stevilka_strani_pdf: list[int]
 
 
 def dis_slovarcek(query: str) -> list[slovar_result]:
@@ -49,7 +48,7 @@ def dis_slovarcek(query: str) -> list[slovar_result]:
             "Error accessing https://dis-slovarcek.ijs.si. Status code:",
             response.status_code,
         )
-        return
+        return []
 
     soup = BeautifulSoup(response.content, "html.parser")
     result_containers = soup.find_all(id="all-search-results")
@@ -321,8 +320,7 @@ def repozitorij(query: str, page: int) -> list[repozitorij_result]:
                 organizacije=[o[0] for o in organizacije],
                 repozitorij_url=stran[3],
                 datoteka_url=stran[4],
-                stevilka_strani_pdf=stran[5].split(","),
-                stevilka_strani_skupaj=stran[6].split(","),
+                stevilka_strani_skupaj=stran[5].split(","),
             )
         )
 
