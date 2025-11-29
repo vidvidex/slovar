@@ -262,7 +262,7 @@ def google_translate(query: str) -> list[slovar_result]:
 
 def repozitorij(query: str, page: int) -> list[repozitorij_result]:
     print("Repozitorij: ", query, "page:", page)
-    page_size = 50
+    page_size = 101     # Page size rabi biti vsaj 101, da je spodnji query hiter (iz nekega razloga se pri manjšem limitu čisto pokvari plan in rabi 20+ sec namesto nekaj ms)
     offset = (page - 1) * page_size
 
     connection = psycopg2.connect(**DB_CONFIG)
@@ -274,16 +274,14 @@ def repozitorij(query: str, page: int) -> list[repozitorij_result]:
         return []
 
     strani_query = f"""
-        SELECT gradivo_id, naslov, leto, repozitorij_url, url as datoteka_url,
-            STRING_AGG(stevilka_strani_pdf::text, ',') as stevilke_strani_pdf,
-            STRING_AGG(stevilka_strani_skupaj::text, ',') as stevilke_strani_skupaj
-        FROM datoteke
-        JOIN strani ON datoteke.id = strani.datoteka_id
-        JOIN gradiva ON datoteke.gradivo_id = gradiva.id
-        WHERE text_tsv @@ plainto_tsquery(%s)
-        GROUP BY datoteka_id, gradivo_id, naslov, leto, repozitorij_url, url
-        ORDER BY gradivo_id DESC
-        LIMIT %s OFFSET %s
+    SELECT gradivo_id, naslov, leto, repozitorij_url, url as datoteka_url,
+        STRING_AGG(stevilka_strani_skupaj::text, ',') as stevilke_strani_skupaj
+    from (SELECT datoteka_id, stevilka_strani_skupaj FROM strani WHERE text_tsv @@ plainto_tsquery(%d)) s
+    join datoteke d on s.datoteka_id = d.id
+    join gradiva g on d.gradivo_id = g.id
+    group by gradivo_id, naslov, leto, repozitorij_url, url
+    order by gradivo_id
+    limit %d offset %d
     """
 
     cursor.execute(strani_query, (query, page_size, offset))
