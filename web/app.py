@@ -276,12 +276,12 @@ def repozitorij(query: str, page: int) -> list[repozitorij_result]:
     strani_query = f"""
     SELECT gradivo_id, naslov, leto, repozitorij_url, url as datoteka_url,
         STRING_AGG(stevilka_strani_skupaj::text, ',') as stevilke_strani_skupaj
-    from (SELECT datoteka_id, stevilka_strani_skupaj FROM strani WHERE text_tsv @@ plainto_tsquery(%d)) s
+    from (SELECT datoteka_id, stevilka_strani_skupaj FROM strani WHERE text_tsv @@ plainto_tsquery(%s)) s
     join datoteke d on s.datoteka_id = d.id
     join gradiva g on d.gradivo_id = g.id
     group by gradivo_id, naslov, leto, repozitorij_url, url
     order by gradivo_id
-    limit %d offset %d
+    limit %s offset %s
     """
 
     cursor.execute(strani_query, (query, page_size, offset))
