@@ -11,7 +11,7 @@ services:
       POSTGRES_USER: "slovar"
       POSTGRES_PASSWORD: "password"
     volumes:
-      - "postgres_data:/var/lib/postgresql/data"
+      - "postgres_data:/var/lib/postgresql"
 
 volumes:
   postgres_data:
