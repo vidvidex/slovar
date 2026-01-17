@@ -105,6 +105,20 @@
       {% endif %}
       {% endif %}
 
+      {% if enabled_slovarji.ui_slovar %}
+      <h3 class="d-flex justify-content-center mt-4"><a href="https://terminoloski.slovenscina.eu/iskanje?q=*&d=7">Terminološki slovar s področja umetne inteligence</a></h3>
+      {% if results.ui_slovar %} {% for result in results.ui_slovar %}
+      <div class="row">
+        <div class="col d-flex justify-content-end">{{ result.en }}</div>
+        <div class="col">{{ result.sl }}</div>
+      </div>
+      {% endfor %} {% else %}
+      <div class="row">
+        <div class="col d-flex justify-content-center">Ni rezultatov</div>
+      </div>
+      {% endif %}
+      {% endif %}
+
       {% if enabled_slovarji.google_translate %}
       <h3 class="d-flex justify-content-center mt-4"><a href="https://translate.google.com/">Google Translate</a></h3>
       {% if results.google_translate %} {% for result in results.google_translate %}

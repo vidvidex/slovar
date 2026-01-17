@@ -10,6 +10,7 @@ Terminološki slovarji na enem mestu
 - [Slovar IJS](https://www.ijs.si/cgi-bin/rac-slovar)
 - [Islovar](http://islovar.org/islovar)
 - [EZS Glosar](https://eglosar.si/)
+- [Terminološki slovar s področja umetne inteligence](https://terminoloski.slovenscina.eu/iskanje?q=*&d=7) (del Slovenskega terminološkega portala)
 - [Google Translate](https://translate.google.com/)
 - [Repozitorij UL](https://repozitorij.uni-lj.si) (Iskanje bo vsebini objavljenih del v upanju, da je nekdo pred nami že našel dober prevod)
   - Vrne številke strani, na katerih se pojavi iskana beseda. Nato je potrebno ročno najti potencialen prevod

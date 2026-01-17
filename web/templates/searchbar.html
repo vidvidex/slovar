@@ -39,6 +39,10 @@
           <label class="form-check-label" for="enableEzs_glosar">EZS Glosar</label>
         </div>
         <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="ui_slovar" id="enableUi_slovar" {% if enabled_slovarji.ui_slovar %}checked{% endif %} />
+          <label class="form-check-label" for="enableUi_slovar">Terminološki slovar s področja umetne inteligence</label>
+        </div>
+        <div class="form-check">
           <input class="form-check-input" type="checkbox" name="google-translate" id="enableGT" {% if enabled_slovarji.google_translate %}checked{% endif %} />
           <label class="form-check-label" for="enableGT">Google prevajalnik</label>
         </div>

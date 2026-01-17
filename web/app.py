@@ -252,6 +252,75 @@ def ezs_glosar(query: str) -> list[slovar_result]:
     return results
 
 
+def ui_slovar(query: str) -> list[slovar_result]:
+    print("Terminološki slovar s področja umetne inteligence: ", query)
+
+    def parse_results_from_soup(soup_obj):
+        """Helper function to parse results from a BeautifulSoup object."""
+        page_results = []
+        result_items = soup_obj.find_all("div", class_="result-item")
+
+        for item in result_items:
+            try:
+                # Extract Slovene word
+                sl_element = item.find(class_="results-item-headword")
+                if not sl_element:
+                    continue
+                sl = sl_element.get_text(strip=True)
+
+                # Extract English word
+                en_element = item.find(class_="results-foreign-term")
+                if not en_element:
+                    continue
+                en = en_element.get_text(strip=True)
+
+                page_results.append(slovar_result(en=en, sl=sl))
+            except Exception as e:
+                print(f"Error parsing result item: {e}")
+                continue
+
+        return page_results
+
+    # First request to get total number of pages
+    url = f"https://terminoloski.slovenscina.eu/iskanje?q={query}&p=1&d=7"
+
+    response = requests.get(url, timeout=REQUEST_TIMEOUT)
+    if not response.ok:
+        print(f"Error accessing {url}. Status code: {response.status_code}")
+        return []
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    # Extract total number of pages
+    total_pages = 1
+    try:
+        pages_total_element = soup.find("span", class_="pages-total")
+        if pages_total_element:
+            total_pages = int(pages_total_element.get_text(strip=True))
+            print(f"Total pages: {total_pages}")
+    except Exception as e:
+        print(f"Error parsing pagination info: {e}")
+
+    results = []
+
+    # Parse first page (already fetched)
+    print(f"Scraping page 1/{total_pages}")
+    results.extend(parse_results_from_soup(soup))
+
+    # Scrape remaining pages
+    for page_num in range(2, total_pages + 1):
+        url = f"https://terminoloski.slovenscina.eu/iskanje?q={query}&p={page_num}&d=7"
+        response = requests.get(url, timeout=REQUEST_TIMEOUT)
+        if not response.ok:
+            print(f"Error accessing page {page_num}. Status code: {response.status_code}")
+            continue
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        print(f"Scraping page {page_num}/{total_pages}")
+        results.extend(parse_results_from_soup(soup))
+
+    return results
+
+
 def google_translate(query: str) -> list[slovar_result]:
     print("Google Translate: ", query)
     translator = Translator()
@@ -354,6 +423,9 @@ async def najdi_rezultate(query: str, repozitorij_page: int, enabled_slovarji: D
     if enabled_slovarji.get("ezs_glosar"):
         tasks["ezs_glosar"] = loop.run_in_executor(None, ezs_glosar, query)
 
+    if enabled_slovarji.get("ui_slovar"):
+        tasks["ui_slovar"] = loop.run_in_executor(None, ui_slovar, query)
+
     if enabled_slovarji.get("google_translate"):
         tasks["google_translate"] = loop.run_in_executor(None, google_translate, query)
 
@@ -379,6 +451,7 @@ def index():
         "ijs": True,
         "islovar": True,
         "ezs_glosar": True,
+        "ui_slovar": True,
         "google_translate": True,
         "repozitorij": False,
     }
@@ -400,6 +473,7 @@ def search():
         "ijs": "ijs" in request.args and request.args["ijs"] == "on",
         "islovar": "islovar" in request.args and request.args["islovar"] == "on",
         "ezs_glosar": "ezs_glosar" in request.args and request.args["ezs_glosar"] == "on",
+        "ui_slovar": "ui_slovar" in request.args and request.args["ui_slovar"] == "on",
         "google_translate": "google-translate" in request.args and request.args["google-translate"] == "on",
         "repozitorij": "repozitorij" in request.args and request.args["repozitorij"] == "on",
     }
