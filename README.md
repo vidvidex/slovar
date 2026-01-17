@@ -28,7 +28,7 @@ Terminološki slovarji na enem mestu
 1. Poženi postgres
 
     ```bash
-    docker-compose up
+    docker compose up
     ```
 
 2. Naloži knjižnice za slovar-web
