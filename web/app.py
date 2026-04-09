@@ -112,6 +112,10 @@ def sdrv(query: str) -> list[slovar_result]:
     response = session.get(search_url, timeout=REQUEST_TIMEOUT)
     soup = BeautifulSoup(response.text, "html.parser")
 
+    if response.status_code != 200:
+        print("Error accessing SDRV. Status code:", response.status_code)
+        return []
+
     # Find the CSRF token in the HTML
     csrf_token = soup.find("input", {"name": "csrfmiddlewaretoken"})["value"]
 
